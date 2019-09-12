@@ -1,0 +1,16 @@
+.DS_Store
+
+.gradle/
+.idea/
+build/
+.externalNativeBuild/
+
+**/app/assets/
+**/app/release/
+
+/captures
+
+proj.android-studio/local.properties
+build-cfg.json
+proj.android-studio.iml
+**/app/*.iml
