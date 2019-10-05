@@ -28,30 +28,50 @@ export default class start extends cc.Component {
     }
 
     // 判断关键热更文件是否存在
-    public async HotUpdateFile(): Promise<any> {
+    // public async HotUpdateFile(): Promise<any> {
+    //     let path = this.root_path;
+    //     let res: any = { path: `${path}/${PROJECT_MANIFEST}` };
+    //     console.log('jsw 查找文件', res.path)
+    //     if (!jsb.fileUtils.isFileExist(`${path}/${PROJECT_MANIFEST}`)) {
+    //         let down = new DownloadsPromise();
+    //         res = await down.startDownLoad(`${HotUpdateConfig.HotUpdateUrl}${cc.sys.localStorage.getItem('PackMd5')}`, PROJECT_MANIFEST)
+    //     }
+
+    //     let promise = new Promise((resolve, rejects) => {
+    //         if (res.path && jsb.fileUtils.isFileExist(path)) {
+    //             console.log('jsw 文件是否存在', jsb.fileUtils.isFileExist(path));
+    //             resolve(res)
+    //         } else {
+    //             rejects('下载失败')
+    //         }
+    //     })
+    //     return promise;
+    // }
+
+    // 判断关键热更文件是否存在
+    public HotUpdateFile(): boolean {
         let path = this.root_path;
-        let res: any = { path: `${path}/${PROJECT_MANIFEST}` };
-        console.log('jsw 查找文件', res.path)
+        let res = false;
         if (!jsb.fileUtils.isFileExist(`${path}/${PROJECT_MANIFEST}`)) {
-            let down = new DownloadsPromise();
-            res = await down.startDownLoad(`${HotUpdateConfig.HotUpdateUrl}${cc.sys.localStorage.getItem('PackMd5')}`, PROJECT_MANIFEST)
+            // 如果清单文件不存在
+            if (jsb.zip) {
+                jsb.zip.copyManifest(`${path}/${PROJECT_MANIFEST}`)
+            }
         }
 
-        let promise = new Promise((resolve, rejects) => {
-            if (res.path && jsb.fileUtils.isFileExist(path)) {
-                console.log('jsw 文件是否存在', jsb.fileUtils.isFileExist(path));
-                resolve(res)
-            } else {
-                rejects('下载失败')
-            }
-        })
-        return promise;
+        if (jsb.fileUtils.isFileExist(`${path}/${PROJECT_MANIFEST}`)) {
+            console.log('jsw 文件是否存在', jsb.fileUtils.isFileExist(`${path}/${PROJECT_MANIFEST}`));
+            res = true
+        } else {
+            res = false
+        }
+        return res;
     }
 
     // 热更新默认模块
-    public async HotUpdate() {
-        let res = await this.HotUpdateFile()
-        if (!res.path) {
+    public HotUpdate() {
+        let res = this.HotUpdateFile()
+        if (!res) {
             console.log('jsw 下载清单失败', res);
             return
         }
@@ -60,9 +80,9 @@ export default class start extends cc.Component {
             url: HotUpdateConfig.HotUpdateUrl,
             storagePath: 'test-default',
             customManifestStr: `${this.root_path}${PROJECT_MANIFEST}`
-        }, (res) => {
-            console.log('jsw 热更消息', res)
-            switch (res) {
+        }, (res1) => {
+            console.log('jsw 热更消息', res1)
+            switch (res1) {
                 case UPDATE_TYPE.LATEST: // 最新版本流程
                     // 缺少子游戏检查
                     cc.director.loadScene('hall')
@@ -75,4 +95,31 @@ export default class start extends cc.Component {
             }
         })
     }
+    // // 热更新默认模块
+    // public async HotUpdate() {
+    //     let res = await this.HotUpdateFile()
+    //     if (!res.path) {
+    //         console.log('jsw 下载清单失败', res);
+    //         return
+    //     }
+    //     let updateGame = new UpdateGame()
+    //     updateGame.Run({
+    //         url: HotUpdateConfig.HotUpdateUrl,
+    //         storagePath: 'test-default',
+    //         customManifestStr: `${this.root_path}${PROJECT_MANIFEST}`
+    //     }, (res1) => {
+    //         console.log('jsw 热更消息', res1)
+    //         switch (res1) {
+    //             case UPDATE_TYPE.LATEST: // 最新版本流程
+    //                 // 缺少子游戏检查
+    //                 cc.director.loadScene('hall')
+    //                 break;
+    //             case UPDATE_TYPE.OVER: // 更新完毕需要重新启动
+    //                 cc.game.restart()
+    //                 break;
+    //             default:
+    //                 console.log('jsw 热更新失败流程')
+    //         }
+    //     })
+    // }
 }

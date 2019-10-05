@@ -1,8 +1,6 @@
 import { Downloads, DownLoadInfo, DownLoadError, DownLoadSuccess } from '../../script/download/DownLoad'
 import { ChildHotUpdate, UPDATE_TYPE } from '../../script/download/ChildHotUpdate'
 import { HotUpdateConfig } from '../../../start/script/config/HotUpdateConfig'
-import { promises } from 'dns';
-import { rejects } from 'assert';
 
 const _MANIFEST_NAME_: string = "project.manifest"; // 清单文件名
 const _VERSION_NAME_: string = "version.manifest"; // 版本文件名
@@ -28,29 +26,32 @@ export class GameIcon extends cc.Component {
     public flag: string = '';
 
     @property(cc.ProgressBar)
-    private _progressBar: cc.ProgressBar = null;
+    private _progressBar: cc.ProgressBar = null; // 进度组件
 
-    private _type: GAME_TYPE = 3;
+    private _type: GAME_TYPE = GAME_TYPE.CHECK_UPDATE; // 游戏状态
 
-    private childHotUpdate: ChildHotUpdate
-    private _childHotUpdate_lock = false;
+    private childHotUpdate: ChildHotUpdate = null; // 更新对象
+
     private _root_path: string = '';
 
     public onLoad(): void {
-        this.gameName.string = this.flag;
-        this.childHotUpdate = new ChildHotUpdate()
-        this._root_path = jsb.fileUtils.getWritablePath()
-        this.getGameType()
-        this.upType()
+        if (this.gameName) {
+            this.gameName.string = this.flag;
+        }
+        this.childHotUpdate = new ChildHotUpdate();
+        this._root_path = jsb.fileUtils.getWritablePath();
+        this.getGameType();
+        this.upType();
         if (this._type === GAME_TYPE.NOT) { return }; // 如果游戏没有下载不用检测更新
-        this.checkUpdate().then(res => {
-            console.log('jsw 更新检测完成 code = ', res)
-            this.upType()
-        }).catch(err => {
-            console.log('jsw 更新检测异常 ', err)
-            this._type = GAME_TYPE.ERROR;
-            this.upType()
-        })
+        // 暂时关闭更新检测
+        // this.checkUpdate().then(res => {
+        //     console.log('jsw 更新检测完成 code = ', res);
+        //     this.upType();
+        // }).catch(err => {
+        //     console.log('jsw 更新检测异常 ', err);
+        //     this._type = GAME_TYPE.ERROR;
+        //     this.upType();
+        // })
 
     }
 
@@ -79,9 +80,10 @@ export class GameIcon extends cc.Component {
         })
     }
 
+    /**
+     *  运行热更新
+     */
     public hotUpdate() {
-
-        this._childHotUpdate_lock = true
 
         console.log('jsw 开始更新 hotUpdate:', this.flag)
         this.childHotUpdate.Run(
@@ -201,24 +203,27 @@ export class GameIcon extends cc.Component {
 
     // 下载游戏
     public downLoadGame(url: string, call?: (bool: boolean) => void) {
-        // if (this.getGameType() !== GAME_TYPE.NOT) {
-        //     console.log('jsw 游戏已下载')
-        //     return;
-        // }
+        if (this.isDownloads()) {
+            console.log('jsw 游戏已下载')
+            call && call(true)
+            return;
+        }
         let down = new Downloads();
-        down.error = () => {
+        down.error = (error: DownLoadError) => {
             call && call(false)
             console.log('jsw downLoadGame 下载失败')
         };
-        // down.schedule = call_obj.schedule;
-        down.success = (res) => {
+        down.schedule = (info: DownLoadInfo) => {
+            // 下载进度
+        };
+        down.success = (res: DownLoadSuccess) => {
             console.log('jsw downLoadGame 下载成功', res.path)
             let temp = this.unzip(res.path, `${this.WRITABLE_DIRECTORY}`)
             console.log('jsw 解压结果', temp);
             if (temp) { // 完成
-                this._type = GAME_TYPE.CHECK_UPDATE
-                this.upType()
-                call && call(true)
+                this._type = GAME_TYPE.CHECK_UPDATE;
+                this.upType();
+                call && call(true);
             }
             call && call(false)
         };
@@ -262,14 +267,13 @@ export class GameIcon extends cc.Component {
         if (!jsb.fileUtils.isDirectoryExist(tag_path)) {
             jsb.fileUtils.createDirectory(tag_path)
         }
-        if (cc.sys.os === cc.sys.OS_ANDROID) {
-            // res = jsb.reflection.callStaticMethod("org/cocos2dx/javascript/AppActivity", "unZip", "(Ljava/lang/String;Ljava/lang/String;)Z", zip_path, tag_path)
+        if (cc.sys.os === cc.sys.OS_ANDROID || cc.sys.os === cc.sys.OS_IOS) {
             if (jsb.zip) {
                 console.log('zip 存在')
+                res = jsb.zip.unzip(zip_path, tag_path)
             } else {
                 console.log('zip 不存在')
             }
-            res = jsb.zip.unzip(zip_path, tag_path)
         }
         console.log('jsw 解压完成', res)
         return res;

@@ -198,7 +198,7 @@ if (false) {
     window.boot();
 }
 else if (window.jsb) {
-    localStorage.setItem('PackMd5','e09f02b6312e5a703c3ec2ee0986b2ad')
+    localStorage.setItem('PackMd5','927b8c5be62e1f42d02df171e1cbc564')
     var hotUpdateSearchPaths = localStorage.getItem('HotUpdateSearchPaths');
     if (hotUpdateSearchPaths) {
         jsb.fileUtils.setSearchPaths(JSON.parse(hotUpdateSearchPaths));

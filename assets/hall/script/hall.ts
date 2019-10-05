@@ -31,11 +31,11 @@ export default class hall extends cc.Component {
             cc.director.loadScene('ppc');
             return
         }
-        if (script.getGameType() === GAME_TYPE.UPDATE || script.getGameType() === GAME_TYPE.CHECK_UPDATE) {  // 需要更新的流程
-            console.log('启动游戏更新');
-            script.hotUpdate()
-            return;
-        }
+        // if (script.getGameType() === GAME_TYPE.UPDATE || script.getGameType() === GAME_TYPE.CHECK_UPDATE) {  // 需要更新的流程
+        //     console.log('启动游戏更新');
+        //     script.hotUpdate()
+        //     return;
+        // }
 
         // 下载流程
         if (!this._is_lock) {

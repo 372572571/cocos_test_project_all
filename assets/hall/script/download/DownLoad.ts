@@ -1,5 +1,3 @@
-import { rejects } from "assert";
-import { resolve } from "url";
 
 // 下载大文件
 export class Downloads {

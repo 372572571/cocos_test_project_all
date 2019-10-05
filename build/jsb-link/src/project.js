@@ -577,26 +577,18 @@ e.gameName = null;
 e.type = null;
 e.flag = "";
 e._progressBar = null;
-e._type = 3;
-e._childHotUpdate_lock = !1;
+e._type = o.CHECK_UPDATE;
+e.childHotUpdate = null;
 e._root_path = "";
 return e;
 }
 e.prototype.onLoad = function() {
-var t = this;
-this.gameName.string = this.flag;
+this.gameName && (this.gameName.string = this.flag);
 this.childHotUpdate = new n.ChildHotUpdate();
 this._root_path = jsb.fileUtils.getWritablePath();
 this.getGameType();
 this.upType();
-this._type !== o.NOT && this.checkUpdate().then(function(e) {
-console.log("jsw 更新检测完成 code = ", e);
-t.upType();
-}).catch(function(e) {
-console.log("jsw 更新检测异常 ", e);
-t._type = o.ERROR;
-t.upType();
-});
+this._type, o.NOT;
 };
 e.prototype.checkUpdate = function() {
 return __awaiter(this, void 0, Promise, function() {
@@ -630,7 +622,6 @@ s(t);
 };
 e.prototype.hotUpdate = function() {
 var t = this;
-this._childHotUpdate_lock = !0;
 console.log("jsw 开始更新 hotUpdate:", this.flag);
 this.childHotUpdate.Run({
 url: i.HotUpdateConfig.HotUpdateUrl + this.flag + "/",
@@ -718,11 +709,17 @@ return this._type;
 return this._type;
 };
 e.prototype.downLoadGame = function(t, e) {
-var s = this, n = new a.Downloads();
-n.error = function() {
+var s = this;
+if (this.isDownloads()) {
+console.log("jsw 游戏已下载");
+e && e(!0);
+} else {
+var n = new a.Downloads();
+n.error = function(t) {
 e && e(!1);
 console.log("jsw downLoadGame 下载失败");
 };
+n.schedule = function(t) {};
 n.success = function(t) {
 console.log("jsw downLoadGame 下载成功", t.path);
 var a = s.unzip(t.path, "" + s.WRITABLE_DIRECTORY);
@@ -735,6 +732,7 @@ e && e(!0);
 e && e(!1);
 };
 n.startDownLoad(t + "/" + this.flag + ".zip");
+}
 };
 e.prototype.isDownloads = function() {
 if ("" === this.flag) return !1;
@@ -745,10 +743,10 @@ return !!jsb.fileUtils.isFileExist("" + this.WRITABLE_DIRECTORY + this.flag + "/
 e.prototype.unzip = function(t, e) {
 var s = !1;
 jsb.fileUtils.isDirectoryExist(e) || jsb.fileUtils.createDirectory(e);
-if (cc.sys.os === cc.sys.OS_ANDROID) {
-jsb.zip ? console.log("zip 存在") : console.log("zip 不存在");
+if (cc.sys.os === cc.sys.OS_ANDROID || cc.sys.os === cc.sys.OS_IOS) if (jsb.zip) {
+console.log("zip 存在");
 s = jsb.zip.unzip(t, e);
-}
+} else console.log("zip 不存在");
 console.log("jsw 解压完成", s);
 return s;
 };
@@ -1342,16 +1340,13 @@ var e = this;
 cc.sys.isNative && console.log("jsw 搜索路径", JSON.stringify(jsb.fileUtils.getSearchPaths()));
 var s = t.currentTarget.getComponent(a.GameIcon);
 console.log("jsw 当前锁状态", this._is_lock);
-if (s.getGameType() !== a.GAME_TYPE.READY) if (s.getGameType() !== a.GAME_TYPE.UPDATE && s.getGameType() !== a.GAME_TYPE.CHECK_UPDATE) {
+if (s.getGameType() !== a.GAME_TYPE.READY) {
 if (!this._is_lock) {
 this._is_lock = !0;
 s.downLoadGame(o.HotUpdateConfig.HotUpdateUrl, function(t) {
 e._is_lock = !1;
 });
 }
-} else {
-console.log("启动游戏更新");
-s.hotUpdate();
 } else {
 console.log("进入碰碰车");
 cc.director.loadScene("ppc");
@@ -1536,7 +1531,7 @@ cc._RF.push(e, "20d1aSbKcRDxbnlflWDrYGR", "start");
 Object.defineProperty(s, "__esModule", {
 value: !0
 });
-var o = t("./config/HotUpdateConfig"), a = t("../../hall/script/download/DownLoad"), n = t("../../hall/script/download/UpdateGame"), i = cc._decorator, r = i.ccclass, l = (i.property, 
+var o = t("./config/HotUpdateConfig"), a = t("../../hall/script/download/UpdateGame"), n = cc._decorator, i = n.ccclass, r = (n.property, 
 function(t) {
 __extends(e, t);
 function e() {
@@ -1551,58 +1546,29 @@ this.HotUpdate();
 } else cc.director.loadScene("hall");
 };
 e.prototype.HotUpdateFile = function() {
-return __awaiter(this, void 0, Promise, function() {
-var t, e;
-return __generator(this, function(s) {
-switch (s.label) {
-case 0:
-t = this.root_path;
-e = {
-path: t + "/project.manifest"
-};
-console.log("jsw 查找文件", e.path);
-return jsb.fileUtils.isFileExist(t + "/project.manifest") ? [ 3, 2 ] : [ 4, new a.DownloadsPromise().startDownLoad("" + o.HotUpdateConfig.HotUpdateUrl + cc.sys.localStorage.getItem("PackMd5"), "project.manifest") ];
-
-case 1:
-e = s.sent();
-s.label = 2;
-
-case 2:
-return [ 2, new Promise(function(s, o) {
-if (e.path && jsb.fileUtils.isFileExist(t)) {
-console.log("jsw 文件是否存在", jsb.fileUtils.isFileExist(t));
-s(e);
-} else o("下载失败");
-}) ];
-}
-});
-});
+var t = this.root_path, e = !1;
+jsb.fileUtils.isFileExist(t + "/project.manifest") || jsb.zip && jsb.zip.copyManifest(t + "/project.manifest");
+if (jsb.fileUtils.isFileExist(t + "/project.manifest")) {
+console.log("jsw 文件是否存在", jsb.fileUtils.isFileExist(t + "/project.manifest"));
+e = !0;
+} else e = !1;
+return e;
 };
 e.prototype.HotUpdate = function() {
-return __awaiter(this, void 0, void 0, function() {
-var t;
-return __generator(this, function(e) {
-switch (e.label) {
-case 0:
-return [ 4, this.HotUpdateFile() ];
-
-case 1:
-if (!(t = e.sent()).path) {
-console.log("jsw 下载清单失败", t);
-return [ 2 ];
-}
-new n.UpdateGame().Run({
+var t = this.HotUpdateFile();
+if (t) {
+new a.UpdateGame().Run({
 url: o.HotUpdateConfig.HotUpdateUrl,
 storagePath: "test-default",
 customManifestStr: this.root_path + "project.manifest"
 }, function(t) {
 console.log("jsw 热更消息", t);
 switch (t) {
-case n.UPDATE_TYPE.LATEST:
+case a.UPDATE_TYPE.LATEST:
 cc.director.loadScene("hall");
 break;
 
-case n.UPDATE_TYPE.OVER:
+case a.UPDATE_TYPE.OVER:
 cc.game.restart();
 break;
 
@@ -1610,17 +1576,13 @@ default:
 console.log("jsw 热更新失败流程");
 }
 });
-return [ 2 ];
-}
-});
-});
+} else console.log("jsw 下载清单失败", t);
 };
-return e = __decorate([ r ], e);
+return e = __decorate([ i ], e);
 }(cc.Component));
-s.default = l;
+s.default = r;
 cc._RF.pop();
 }, {
-"../../hall/script/download/DownLoad": "DownLoad",
 "../../hall/script/download/UpdateGame": "UpdateGame",
 "./config/HotUpdateConfig": "HotUpdateConfig"
 } ]
